@@ -1,13 +1,258 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  ORGANIZER
+  ATTENDEE
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String?
+  phone         String?
+  image         String?
+  role          Role      @default(ATTENDEE)
+  emailVerified DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+
+  events Event[] @relation("OrganizerEvents")
+
+  bookings Booking[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Account {
+  id                String @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+
+  refresh_token String? @db.Text
+  access_token  String? @db.Text
+  expires_at    Int?
+  token_type    String?
+  scope         String?
+  id_token      String? @db.Text
+  session_state String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Event {
+  id String @id @default(cuid())
+
+  title String
+
+  slug String @unique
+
+  description String @db.Text
+
+  category String
+
+  coverImage String?
+
+  venue String
+
+  address String
+
+  city String
+
+  startDate DateTime
+
+  endDate DateTime
+
+  status EventStatus @default(DRAFT)
+
+  deletedAt DateTime?
+
+  organizerId String
+
+  organizer User @relation("OrganizerEvents", fields: [organizerId], references: [id], onDelete: Cascade)
+
+  ticketTypes TicketType[]
+
+  bookings Booking[]
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@index([organizerId])
+  @@index([city])
+  @@index([status])
+  @@index([startDate])
+  @@index([deletedAt])
+  @@map("events")
+}
+
+model TicketType {
+  id String @id @default(cuid())
+
+  eventId String
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  name String
+
+  description String?
+
+  price Decimal @db.Decimal(10, 2)
+
+  quantity Int
+
+  quantitySold Int @default(0)
+
+  bookings Booking[]
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, name])
+  @@map("ticket_types")
+}
+
+model Booking {
+  id String @id @default(cuid())
+
+  bookingReference String @unique
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  eventId String
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  ticketTypeId String
+
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id])
+
+  quantity Int
+
+  totalAmount Decimal @db.Decimal(10, 2)
+
+  status BookingStatus @default(PENDING)
+
+  tickets Ticket[]
+
+  payment Payment?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@map("bookings")
+}
+
+model Ticket {
+  id String @id @default(cuid())
+
+  bookingId String
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  qrCode String @unique
+
+  seatNumber String?
+
+  status TicketStatus @default(VALID)
+
+  checkedInAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("tickets")
+}
+
+model Payment {
+  id String @id @default(cuid())
+
+  bookingId String @unique
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  amount Decimal @db.Decimal(10, 2)
+
+  paymentId String?
+
+  paymentMethod String?
+
+  status PaymentStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@map("payments")
 }
