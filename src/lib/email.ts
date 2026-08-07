@@ -1,8 +1,10 @@
 import { Resend } from "resend";
 import { logger } from "@/lib/logger";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.EMAIL_FROM ?? "Eventify <onboarding@resend.dev>";
+
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 interface BookingConfirmationInput {
   to: string;
@@ -14,6 +16,11 @@ interface BookingConfirmationInput {
 }
 
 export async function sendBookingConfirmationEmail(input: BookingConfirmationInput) {
+  if (!resend) {
+    logger.warn("RESEND_API_KEY not set — skipping booking confirmation email", { to: input.to });
+    return;
+  }
+
   try {
     await resend.emails.send({
       from: FROM,
@@ -39,6 +46,11 @@ export async function sendBookingConfirmationEmail(input: BookingConfirmationInp
 }
 
 export async function sendWelcomeEmail(to: string, name: string) {
+  if (!resend) {
+    logger.warn("RESEND_API_KEY not set — skipping welcome email", { to });
+    return;
+  }
+
   try {
     await resend.emails.send({
       from: FROM,
