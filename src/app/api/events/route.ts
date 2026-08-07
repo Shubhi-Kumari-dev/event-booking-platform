@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     const where: Prisma.EventWhereInput = {
       deletedAt: null,
-      status: query.status ?? EVENT_STATUS.PUBLISHED,
+      status: (query.status ?? EVENT_STATUS.PUBLISHED) as any,
       ...(query.category ? { category: query.category } : {}),
       ...(query.city ? { city: { equals: query.city, mode: "insensitive" } } : {}),
       ...(query.search
