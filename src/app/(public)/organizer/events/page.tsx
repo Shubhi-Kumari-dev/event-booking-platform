@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { Calendar, MapPin, PlusCircle } from "lucide-react";
-
+import { Calendar, MapPin, PlusCircle, Pencil, ScanLine } from "lucide-react";
 import { getOrganizerEvents } from "@/services/organizer-events";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
@@ -9,11 +8,7 @@ import { formatEventDate } from "@/lib/format";
 
 export default async function OrganizerEventsPage() {
   const cookieStore = await cookies();
-
-  const response = await getOrganizerEvents(
-    cookieStore.toString()
-  );
-
+  const response = await getOrganizerEvents(cookieStore.toString());
   const events = response.items;
 
   if (events.length === 0) {
@@ -23,10 +18,7 @@ export default async function OrganizerEventsPage() {
         title="No events yet"
         description="Create your first event."
         action={
-          <Button
-            render={<Link href="/organizer/events/new" />}
-            nativeButton={false}
-          >
+          <Button render={<Link href="/organizer/events/new" />} nativeButton={false}>
             Create Event
           </Button>
         }
@@ -38,19 +30,10 @@ export default async function OrganizerEventsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">
-            My Events
-          </h1>
-
-          <p className="text-muted-foreground">
-            Manage all your events.
-          </p>
+          <h1 className="text-2xl font-bold">My Events</h1>
+          <p className="text-muted-foreground">Manage all your events.</p>
         </div>
-
-        <Button
-          render={<Link href="/organizer/events/new" />}
-          nativeButton={false}
-        >
+        <Button render={<Link href="/organizer/events/new" />} nativeButton={false}>
           <PlusCircle className="mr-2 size-4" />
           Create Event
         </Button>
@@ -58,47 +41,50 @@ export default async function OrganizerEventsPage() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         {events.map((event) => (
-          <div
-            key={event.id}
-            className="rounded-xl border border-border bg-card p-6"
-          >
-            <h2 className="text-xl font-semibold">
-              {event.title}
-            </h2>
+          <div key={event.id} className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-xl font-semibold">{event.title}</h2>
 
             <div className="mt-4 space-y-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Calendar className="size-4" />
-
                 {formatEventDate(event.startDate)}
               </div>
-
               <div className="flex items-center gap-2">
                 <MapPin className="size-4" />
-
                 {event.city}
               </div>
             </div>
 
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               <Button
                 variant="outline"
-                render={
-                  <Link
-                    href={`/events/${event.slug}`}
-                  />
-                }
+                size="sm"
+                render={<Link href={`/events/${event.slug}`} />}
                 nativeButton={false}
               >
                 View
               </Button>
-
               <Button
-                render={
-                  <Link
-                    href={`/organizer/events/${event.id}/stats`}
-                  />
-                }
+                variant="outline"
+                size="sm"
+                render={<Link href={`/organizer/events/${event.id}/edit`} />}
+                nativeButton={false}
+              >
+                <Pencil className="mr-1.5 size-3.5" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                render={<Link href={`/organizer/check-in/${event.id}`} />}
+                nativeButton={false}
+              >
+                <ScanLine className="mr-1.5 size-3.5" />
+                Check-in
+              </Button>
+              <Button
+                size="sm"
+                render={<Link href={`/organizer/events/${event.id}/stats`} />}
                 nativeButton={false}
               >
                 Analytics
