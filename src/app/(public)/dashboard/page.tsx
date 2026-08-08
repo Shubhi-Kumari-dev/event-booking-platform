@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+export const dynamic = "force-dynamic";
 import {
   CalendarX,
   Calendar,
