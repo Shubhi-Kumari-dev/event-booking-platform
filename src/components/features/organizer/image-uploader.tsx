@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { ImagePlus, X, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import { apiFetch, ApiError } from "@/lib/api";
 
 interface UploadResponse {

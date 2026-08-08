@@ -185,14 +185,14 @@ export default async function BookingConfirmationPage({
             >
               {/* QR */}
               <div className="overflow-hidden rounded-xl border border-border bg-white p-3">
-                {/* QR is a generated data URL, so next/image is not needed */}
-                <img
-                  src={ticket.qrDataUrl}
-                  alt={`QR code for ticket ${index + 1}`}
-                  width={200}
-                  height={200}
-                  className="size-[200px]"
-                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+<img
+  src={ticket.qrDataUrl}
+  alt={`QR code for ticket ${index + 1}`}
+  width={200}
+  height={200}
+  className="size-[200px]"
+/>
               </div>
 
               {/* Ticket information */}

@@ -62,7 +62,8 @@ export default function NewEventPage() {
 
       const text = await response.text();
 
-      let data: any = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+let data: any = {};
 
       if (text) {
         try {

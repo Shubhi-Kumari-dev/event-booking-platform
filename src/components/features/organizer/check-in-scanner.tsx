@@ -6,7 +6,7 @@ import { CheckCircle2, XCircle, AlertTriangle, Camera, CameraOff } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { verifyTicket, type VerifyTicketResponse } from "@/services/tickets";
-import { ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/api"; // ← yeh line delete karo agar unused hai
 import { cn } from "@/lib/utils";
 
 const SCANNER_ID = "qr-check-in-scanner";
