@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ImageUploader } from "@/components/features/organizer/image-uploader";
 
 export default function NewEventPage() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function NewEventPage() {
   const [city, setCity] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [coverImage, setCoverImage] = useState("");
 
   const [ticketName, setTicketName] = useState("General");
   const [ticketDescription, setTicketDescription] = useState("");
@@ -45,6 +47,7 @@ export default function NewEventPage() {
           startDate: new Date(startDate).toISOString(),
           endDate: new Date(endDate).toISOString(),
           status: "DRAFT",
+          coverImage: coverImage || undefined,
 
           ticketTypes: [
             {
@@ -250,6 +253,9 @@ export default function NewEventPage() {
             required
           />
         </div>
+
+        {/* Banner Image */}
+        <ImageUploader value={coverImage} onChange={setCoverImage} />
 
         {/* Ticket Section */}
         <div className="rounded-xl border border-border p-5">

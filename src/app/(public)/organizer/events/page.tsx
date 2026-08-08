@@ -5,6 +5,7 @@ import { getOrganizerEvents } from "@/services/organizer-events";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { formatEventDate } from "@/lib/format";
+import { DeleteEventButton } from "@/components/features/organizer/delete-event-button";
 
 export default async function OrganizerEventsPage() {
   const cookieStore = await cookies();
@@ -89,6 +90,7 @@ export default async function OrganizerEventsPage() {
               >
                 Analytics
               </Button>
+              <DeleteEventButton eventId={event.id} />
             </div>
           </div>
         ))}

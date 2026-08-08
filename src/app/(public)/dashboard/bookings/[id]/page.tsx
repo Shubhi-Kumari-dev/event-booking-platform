@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { CancelBookingButton } from "@/components/features/bookings/cancel-booking-button";
+import { DownloadQrButton } from "@/components/features/bookings/download-qr-button";
 import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
@@ -38,10 +39,11 @@ export default async function BookingConfirmationPage({
   const { id } = await params;
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
-let booking;
+  let booking;
 
-try {
-  booking = await getBooking(id, cookieHeader);  } catch (error) {
+  try {
+    booking = await getBooking(id, cookieHeader);
+  } catch (error) {
     if (
       error instanceof ApiError &&
       (error.status === 404 || error.status === 403)
@@ -80,14 +82,14 @@ try {
         <Badge className="mt-1">{booking.status}</Badge>
       </div>
       {(booking.status === "CONFIRMED" ||
-  booking.status === "PENDING") &&
-  booking.tickets.every(
-    (ticket) => ticket.status !== "USED"
-  ) && (
-    <div className="mt-6 flex justify-center">
-      <CancelBookingButton bookingId={booking.id} />
-    </div>
-  )}
+        booking.status === "PENDING") &&
+        booking.tickets.every(
+          (ticket) => ticket.status !== "USED"
+        ) && (
+          <div className="mt-6 flex justify-center">
+            <CancelBookingButton bookingId={booking.id} />
+          </div>
+        )}
 
       {/* Event card */}
       <section className="ticket-stub overflow-hidden rounded-xl border border-border bg-card shadow-sm">
@@ -214,6 +216,11 @@ try {
                 {TICKET_STATUS_LABEL[ticket.status] ??
                   ticket.status}
               </Badge>
+
+              <DownloadQrButton
+                qrDataUrl={ticket.qrDataUrl}
+                qrCode={ticket.qrCode}
+              />
             </div>
           ))}
         </div>

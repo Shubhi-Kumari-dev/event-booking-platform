@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { ImageUploader } from "@/components/features/organizer/image-uploader";
 
 export default function EditEventPage() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function EditEventPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [status, setStatus] = useState("DRAFT");
+  const [coverImage, setCoverImage] = useState("");
 
   const [fetching, setFetching] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -53,6 +55,7 @@ export default function EditEventPage() {
         setStartDate(event.startDate ? toDatetimeLocal(event.startDate) : "");
         setEndDate(event.endDate ? toDatetimeLocal(event.endDate) : "");
         setStatus(event.status ?? "DRAFT");
+        setCoverImage(event.coverImage ?? "");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load event");
       } finally {
@@ -85,6 +88,7 @@ export default function EditEventPage() {
           startDate: new Date(startDate).toISOString(),
           endDate: new Date(endDate).toISOString(),
           status,
+          coverImage: coverImage || undefined,
         }),
       });
 
@@ -239,6 +243,8 @@ export default function EditEventPage() {
             required
           />
         </div>
+
+        <ImageUploader value={coverImage} onChange={setCoverImage} />
 
         <div>
           <label className="mb-1 block font-medium">Status</label>
