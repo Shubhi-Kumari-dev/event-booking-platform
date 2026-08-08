@@ -1,145 +1,172 @@
-import Link from "next/link";
-import { cookies } from "next/headers";
 import { Suspense } from "react";
+import { CalendarX } from "lucide-react";
+import Link from "next/link";
 
+import { getEvents } from "@/services/events";
 import {
-  CalendarX,
-  Calendar,
-  MapPin,
-  ChevronRight,
-} from "lucide-react";
-
-import {
-  getMyBookings,
-  type BookingListItem,
-} from "@/services/bookings";
-
-import {
-  formatEventDate,
-  formatPrice,
-} from "@/lib/format";
-
-import { Badge } from "@/components/ui/badge";
+  EventCard,
+  EventCardSkeleton,
+} from "@/components/features/events/event-card";
 import { EventFilters } from "@/components/features/events/event-filters";
 
-const STATUS_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  CONFIRMED: "default",
-  PENDING: "secondary",
-  CANCELLED: "destructive",
-  REFUNDED: "outline",
-};
+interface EventsPageProps {
+  searchParams: Promise<Record<string, string | undefined>>;
+}
 
-function EventFiltersSkeleton() {
+function buildPageHref(
+  params: Record<string, string | undefined>,
+  page: number
+) {
+  const query = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value) {
+      query.set(key, value);
+    }
+  }
+
+  query.set("page", String(page));
+
+  return `?${query.toString()}`;
+}
+
+async function EventsResults({ searchParams }: EventsPageProps) {
+  const params = await searchParams;
+
+  const page = params.page ? Number(params.page) : 1;
+
+  let result;
+
+  try {
+    result = await getEvents({
+      page,
+      limit: 12,
+      search: params.search,
+      category: params.category,
+      city: params.city,
+      sortBy:
+        (params.sortBy as
+          | "date"
+          | "priceAsc"
+          | "priceDesc"
+          | "newest") ?? "date",
+    });
+  } catch {
+    result = {
+      items: [],
+      meta: {
+        page: 1,
+        limit: 12,
+        total: 0,
+        totalPages: 0,
+      },
+    };
+  }
+
+  const { items, meta } = result;
+
+  if (items.length === 0) {
+    return (
+      <div className="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed p-10 text-center">
+        <CalendarX className="mb-4 size-10 text-muted-foreground" />
+
+        <h2 className="text-lg font-semibold">No events found</h2>
+
+        <p className="mt-1 max-w-md text-sm text-muted-foreground">
+          Try a different search term or clear your filters.
+        </p>
+
+        <Link
+          href="/events"
+          className="mt-5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          Clear filters
+        </Link>
+      </div>
+    );
+  }
+
+  const prevHref = buildPageHref(params, page - 1);
+  const nextHref = buildPageHref(params, page + 1);
+
   return (
-    <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+    <>
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((event) => (
+          <EventCard key={event.id} event={event} />
+        ))}
+      </div>
+
+      {meta.totalPages > 1 && (
+        <div className="mt-10 flex items-center justify-center gap-3">
+          {page > 1 ? (
+            <Link
+              href={prevHref}
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              Previous
+            </Link>
+          ) : (
+            <span className="cursor-not-allowed rounded-md border border-border px-3 py-2 text-sm font-medium text-muted-foreground opacity-50">
+              Previous
+            </span>
+          )}
+
+          <span className="px-3 text-sm text-muted-foreground">
+            Page {meta.page} of {meta.totalPages}
+          </span>
+
+          {page < meta.totalPages ? (
+            <Link
+              href={nextHref}
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              Next
+            </Link>
+          ) : (
+            <span className="cursor-not-allowed rounded-md border border-border px-3 py-2 text-sm font-medium text-muted-foreground opacity-50">
+              Next
+            </span>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 
-export default async function DashboardPage() {
-  let bookings: BookingListItem[] = [];
-
-  try {
-    const cookieStore = await cookies();
-    const cookieHeader = cookieStore.toString();
-
-    bookings = await getMyBookings(cookieHeader);
-  } catch (error) {
-    console.error("Failed to load bookings:", error);
-    bookings = [];
-  }
-
+function EventsGridSkeleton() {
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          My Bookings
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <EventCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
+export default async function EventsPage({
+  searchParams,
+}: EventsPageProps) {
+  return (
+    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          Browse events
         </h1>
 
-        <p className="mt-1 text-muted-foreground">
-          View your event bookings and tickets.
+        <p className="mt-2 text-muted-foreground">
+          Find something worth showing up for.
         </p>
       </div>
 
-      <Suspense fallback={<EventFiltersSkeleton />}>
+      <Suspense fallback={<div className="mb-8 h-24 animate-pulse rounded-xl bg-muted" />}>
         <EventFilters />
       </Suspense>
 
-      <div className="mt-6">
-        {bookings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-16 text-center">
-            <CalendarX className="mb-4 size-10 text-muted-foreground" />
-
-            <h2 className="font-semibold">
-              No bookings yet
-            </h2>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your bookings will appear here.
-            </p>
-
-            <Link
-              href="/events"
-              className="mt-5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-            >
-              Browse Events
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {bookings.map((booking) => (
-              <Link
-                key={booking.id}
-                href={`/dashboard/bookings/${booking.id}`}
-                className="block rounded-xl border bg-card p-5 transition-shadow hover:shadow-md"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <h2 className="truncate font-semibold">
-                      {booking.event.title}
-                    </h2>
-
-                    <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="size-4" />
-                        {formatEventDate(
-                          booking.event.startDate
-                        )}
-                      </span>
-
-                      <span className="flex items-center gap-1">
-                        <MapPin className="size-4" />
-                        {booking.event.venue}
-                      </span>
-                    </div>
-
-                    <p className="mt-3 font-mono text-xs text-muted-foreground">
-                      {booking.bookingReference}
-                    </p>
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-3">
-                    <Badge
-                      variant={
-                        STATUS_VARIANT[booking.status] ?? "outline"
-                      }
-                    >
-                      {booking.status}
-                    </Badge>
-
-                    <span className="font-mono font-semibold text-primary">
-                      {formatPrice(booking.totalAmount)}
-                    </span>
-
-                    <ChevronRight className="size-4 text-muted-foreground" />
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+      <div className="mt-8">
+        <Suspense fallback={<EventsGridSkeleton />}>
+          <EventsResults searchParams={searchParams} />
+        </Suspense>
       </div>
     </main>
   );
