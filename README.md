@@ -4,7 +4,8 @@ A full-stack platform for creating events, selling tickets, and validating entry
 
 🔗 Live Demo
 
-App: https://event-booking-platform-neon.vercel.app Repo: https://github.com/Shubhi-Kumari-dev/event-booking-platform
+App: https://event-booking-platform-neon.vercel.app 
+Repo: https://github.com/Shubhi-Kumari-dev/event-booking-platform
 
 🔑 Demo Accounts
 Role	Email	Password
