@@ -1,5 +1,7 @@
 import type { ApiResponse } from "@/types";
 
+// Browser: use same-origin relative URLs.
+// Server: use NEXT_PUBLIC_APP_URL when an absolute URL is required.
 const BASE_URL =
   typeof window === "undefined"
     ? process.env.NEXT_PUBLIC_APP_URL ?? ""
@@ -34,9 +36,11 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const { params, ...init } = options;
 
-  // Browser: use same-origin relative URL
-  // Server: use the absolute application URL
-  let url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
+  // Browser requests stay on the current Vercel domain.
+  // This prevents CORS problems between different Vercel deployment URLs.
+  const url = path.startsWith("http")
+    ? path
+    : `${BASE_URL}${path}`;
 
   if (params) {
     const searchParams = new URLSearchParams();
@@ -50,7 +54,27 @@ export async function apiFetch<T>(
     const qs = searchParams.toString();
 
     if (qs) {
-      url += `?${qs}`;
+      const separator = url.includes("?") ? "&" : "?";
+      return fetch(`${url}${separator}${qs}`, {
+        ...init,
+        headers: {
+          "Content-Type": "application/json",
+          ...init.headers,
+        },
+      }).then(async (res) => {
+        const json: ApiResponse<T> = await res.json();
+
+        if (!json.success) {
+          throw new ApiError(
+            json.error.message,
+            res.status,
+            json.error.code,
+            json.error.details
+          );
+        }
+
+        return json.data;
+      });
     }
   }
 
