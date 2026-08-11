@@ -1,6 +1,9 @@
 import type { ApiResponse } from "@/types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
+const BASE_URL =
+  typeof window === "undefined"
+    ? process.env.NEXT_PUBLIC_APP_URL ?? ""
+    : "";
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | undefined>;
@@ -31,15 +34,9 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const { params, ...init } = options;
 
-  // In the browser, use relative URLs so requests stay on the
-  // same deployed domain and avoid unnecessary CORS requests.
-  const isBrowser = typeof window !== "undefined";
-
-  let url = path.startsWith("http")
-    ? path
-    : isBrowser
-      ? path
-      : `${BASE_URL}${path}`;
+  // Browser: use same-origin relative URL
+  // Server: use the absolute application URL
+  let url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
 
   if (params) {
     const searchParams = new URLSearchParams();
