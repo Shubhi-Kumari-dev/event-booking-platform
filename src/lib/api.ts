@@ -31,7 +31,15 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const { params, ...init } = options;
 
-  let url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
+  // In the browser, use relative URLs so requests stay on the
+  // same deployed domain and avoid unnecessary CORS requests.
+  const isBrowser = typeof window !== "undefined";
+
+  let url = path.startsWith("http")
+    ? path
+    : isBrowser
+      ? path
+      : `${BASE_URL}${path}`;
 
   if (params) {
     const searchParams = new URLSearchParams();
