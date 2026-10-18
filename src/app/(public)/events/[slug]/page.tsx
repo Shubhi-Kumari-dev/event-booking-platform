@@ -24,6 +24,10 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     throw err;
   }
 
+  if (!event) {
+    notFound();
+  }
+
   const price = lowestPrice(event.ticketTypes);
 
   return (
