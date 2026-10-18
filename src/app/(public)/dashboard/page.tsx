@@ -6,6 +6,7 @@ import {
   Calendar,
   MapPin,
   ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
 
 import {
@@ -30,7 +31,13 @@ const STATUS_VARIANT: Record<
   REFUNDED: "outline",
 };
 
-export default async function DashboardPage() {
+interface DashboardPageProps {
+  searchParams: Promise<{ error?: string }>;
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const params = await searchParams;
+  const isForbidden = params?.error === "forbidden";
   let bookings: BookingListItem[] = [];
 
   try {
@@ -45,6 +52,34 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
+      {isForbidden && (
+        <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-900 dark:text-amber-200">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="size-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-sm">Organizer Access Restricted</h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                You attempted to access an Organizer tool, but you are signed in as an <strong>Attendee</strong>. Event creation, analytics, and QR check-in require an Organizer account.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/login"
+                  className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 transition"
+                >
+                  Switch to Organizer (organizer@demo.com)
+                </Link>
+                <Link
+                  href="/register"
+                  className="text-xs font-semibold text-foreground underline underline-offset-4"
+                >
+                  Create New Organizer Account
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">
           My Bookings

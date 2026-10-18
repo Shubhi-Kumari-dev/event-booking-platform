@@ -29,27 +29,22 @@ export function TicketSelector({
       const current = prev[ticketTypeId] ?? 0;
       const next = Math.min(Math.max(current + delta, 0), max);
 
-      // Booking API supports one ticket type per booking.
       if (next === 0) {
         const { [ticketTypeId]: _, ...rest } = prev;
         return rest;
       }
 
-      return { [ticketTypeId]: next };
+      return { ...prev, [ticketTypeId]: next };
     });
   }
 
-  const selectedEntry = Object.entries(quantities)[0];
-  const selectedTicketTypeId = selectedEntry?.[0];
-  const totalQty = selectedEntry?.[1] ?? 0;
+  const selectedEntries = Object.entries(quantities).filter(([, q]) => q > 0);
+  const totalQty = selectedEntries.reduce((sum, [, q]) => sum + q, 0);
 
-  const selectedTicketType = event.ticketTypes.find(
-    (tt) => tt.id === selectedTicketTypeId
-  );
-
-  const totalPrice = selectedTicketType
-    ? totalQty * Number(selectedTicketType.price)
-    : 0;
+  const totalPrice = selectedEntries.reduce((sum, [ttId, q]) => {
+    const tt = event.ticketTypes.find((t) => t.id === ttId);
+    return sum + (tt ? q * Number(tt.price) : 0);
+  }, 0);
 
   async function handleBook() {
     if (loading) return;
@@ -59,7 +54,7 @@ export function TicketSelector({
       return;
     }
 
-    if (!selectedTicketTypeId || totalQty === 0) {
+    if (totalQty === 0 || selectedEntries.length === 0) {
       toast.error("Select at least one ticket");
       return;
     }
@@ -67,17 +62,25 @@ export function TicketSelector({
     setLoading(true);
 
     try {
-      const booking = await apiFetch<{ id: string }>("/api/bookings", {
+      const items = selectedEntries.map(([ticketTypeId, quantity]) => ({
+        ticketTypeId,
+        quantity,
+      }));
+
+      const booking = await apiFetch<{ id: string; bookings?: { id: string }[] }>("/api/bookings", {
         method: "POST",
         body: JSON.stringify({
           eventId: event.id,
-          ticketTypeId: selectedTicketTypeId,
-          quantity: totalQty,
+          items,
         }),
       });
 
       toast.success("Booking confirmed!");
-      router.push(`/dashboard/bookings/${booking.id}`);
+      if (items.length > 1) {
+        router.push("/dashboard");
+      } else {
+        router.push(`/dashboard/bookings/${booking.id}`);
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.message);
@@ -106,10 +109,6 @@ export function TicketSelector({
           const available = tt.quantity - tt.quantitySold;
           const qty = quantities[tt.id] ?? 0;
           const soldOut = available <= 0;
-
-          const disabledByOtherSelection =
-            selectedTicketTypeId !== undefined &&
-            selectedTicketTypeId !== tt.id;
 
           return (
             <div key={tt.id} className="space-y-1.5">
@@ -150,7 +149,6 @@ export function TicketSelector({
                       size="icon-sm"
                       disabled={
                         qty >= available ||
-                        disabledByOtherSelection ||
                         loading
                       }
                       onClick={() => setQty(tt.id, 1, available)}

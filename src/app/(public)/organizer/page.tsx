@@ -5,10 +5,12 @@ import {
   CircleDollarSign,
   ScanLine,
   Ticket,
+  Mail,
 } from "lucide-react";
 import { getOrganizerSummary } from "@/services/organizer";
 import { formatEventDate, formatPrice } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { OrganizerCategoryChart } from "@/components/features/organizer/organizer-category-chart";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   CONFIRMED: "default",
@@ -67,10 +69,21 @@ export default async function OrganizerDashboardPage() {
         />
       </section>
 
+      <OrganizerCategoryChart data={summary.revenueByCategory} />
+
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Bookings */}
+        {/* Recent Bookings / Attendee Activity */}
         <section className="rounded-xl border border-border bg-card p-6">
-          <h2 className="mb-4 text-lg font-semibold">Recent Bookings</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">Attendee Bookings</h2>
+              <span className="flex items-center gap-1.5 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
+                <span className="size-1.5 animate-pulse rounded-full bg-green-500" />
+                Live Feed
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">{summary.recentBookings.length} latest</p>
+          </div>
 
           {summary.recentBookings.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">No bookings yet.</p>
@@ -83,11 +96,24 @@ export default async function OrganizerDashboardPage() {
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{booking.eventTitle}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {booking.attendeeName} · {booking.bookingReference}
-                    </p>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">{booking.attendeeName}</span>
+                      {booking.quantity && booking.ticketTypeName && (
+                        <span>· {booking.quantity}x {booking.ticketTypeName}</span>
+                      )}
+                      <span>· {booking.bookingReference}</span>
+                    </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
+                    {booking.attendeeEmail && (
+                      <a
+                        href={`mailto:${booking.attendeeEmail}?subject=Regarding your booking ${booking.bookingReference} for ${booking.eventTitle}`}
+                        title={`Email ${booking.attendeeName}`}
+                        className="rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <Mail className="size-3.5" />
+                      </a>
+                    )}
                     <Badge variant={STATUS_VARIANT[booking.status] ?? "outline"}>
                       {booking.status}
                     </Badge>

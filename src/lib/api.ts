@@ -1,12 +1,5 @@
 import type { ApiResponse } from "@/types";
 
-// Browser: use same-origin relative URLs.
-// Server: use NEXT_PUBLIC_APP_URL when an absolute URL is required.
-const BASE_URL =
-  typeof window === "undefined"
-    ? process.env.NEXT_PUBLIC_APP_URL ?? ""
-    : "";
-
 interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | undefined>;
 }
@@ -30,17 +23,29 @@ export class ApiError extends Error {
   }
 }
 
+function getBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    // Browser: always use relative URL to stay same-origin and avoid CORS
+    return "";
+  }
+  // Server (SSR / Server Components): Node fetch requires absolute URL
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "http://localhost:3000";
+}
+
 export async function apiFetch<T>(
   path: string,
   options: FetchOptions = {}
 ): Promise<T> {
   const { params, ...init } = options;
 
-  // Browser requests stay on the current Vercel domain.
-  // This prevents CORS problems between different Vercel deployment URLs.
-  const url = path.startsWith("http")
-    ? path
-    : `${BASE_URL}${path}`;
+  const baseUrl = getBaseUrl();
+  let url = path.startsWith("http") ? path : `${baseUrl}${path}`;
 
   if (params) {
     const searchParams = new URLSearchParams();
@@ -51,30 +56,10 @@ export async function apiFetch<T>(
       }
     });
 
-    const qs = searchParams.toString();
+    const queryString = searchParams.toString();
 
-    if (qs) {
-      const separator = url.includes("?") ? "&" : "?";
-      return fetch(`${url}${separator}${qs}`, {
-        ...init,
-        headers: {
-          "Content-Type": "application/json",
-          ...init.headers,
-        },
-      }).then(async (res) => {
-        const json: ApiResponse<T> = await res.json();
-
-        if (!json.success) {
-          throw new ApiError(
-            json.error.message,
-            res.status,
-            json.error.code,
-            json.error.details
-          );
-        }
-
-        return json.data;
-      });
+    if (queryString) {
+      url += `?${queryString}`;
     }
   }
 
@@ -86,7 +71,17 @@ export async function apiFetch<T>(
     },
   });
 
-  const json: ApiResponse<T> = await res.json();
+  let json: ApiResponse<T>;
+
+  try {
+    json = await res.json();
+  } catch {
+    throw new ApiError(
+      `Request failed with status ${res.status}`,
+      res.status,
+      "INVALID_RESPONSE"
+    );
+  }
 
   if (!json.success) {
     throw new ApiError(

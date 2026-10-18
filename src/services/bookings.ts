@@ -22,6 +22,11 @@ export interface BookingEventSummary {
   address?: string;
   startDate: string;
   endDate?: string;
+  organizer?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface BookingTicketTypeSummary {

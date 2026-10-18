@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { CancelBookingButton } from "@/components/features/bookings/cancel-booking-button";
 import { DownloadQrButton } from "@/components/features/bookings/download-qr-button";
+import { AddToCalendarButton } from "@/components/features/bookings/add-to-calendar-button";
 import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import {
   Clock,
   CheckCircle2,
   ArrowLeft,
+  Mail,
 } from "lucide-react";
 
 import { getBooking } from "@/services/bookings";
@@ -81,15 +83,19 @@ export default async function BookingConfirmationPage({
 
         <Badge className="mt-1">{booking.status}</Badge>
       </div>
-      {(booking.status === "CONFIRMED" ||
-        booking.status === "PENDING") &&
-        booking.tickets.every(
-          (ticket) => ticket.status !== "USED"
-        ) && (
-          <div className="mt-6 flex justify-center">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+        <AddToCalendarButton
+          event={booking.event}
+          bookingReference={booking.bookingReference}
+        />
+        {(booking.status === "CONFIRMED" ||
+          booking.status === "PENDING") &&
+          booking.tickets.every(
+            (ticket) => ticket.status !== "USED"
+          ) && (
             <CancelBookingButton bookingId={booking.id} />
-          </div>
-        )}
+          )}
+      </div>
 
       {/* Event card */}
       <section className="ticket-stub overflow-hidden rounded-xl border border-border bg-card shadow-sm">
@@ -225,6 +231,34 @@ export default async function BookingConfirmationPage({
           ))}
         </div>
       </section>
+
+      {/* Host & Event Support */}
+      {booking.event.organizer && (
+        <section className="mt-8 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-11 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
+                {booking.event.organizer.name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Event Host</p>
+                <p className="font-semibold text-foreground">{booking.event.organizer.name}</p>
+                <p className="text-xs text-muted-foreground">Questions about venue, entry, or timings?</p>
+              </div>
+            </div>
+
+            {booking.event.organizer.email && (
+              <a
+                href={`mailto:${booking.event.organizer.email}?subject=${encodeURIComponent(`Attendee Inquiry regarding ${booking.event.title} (Ref: ${booking.bookingReference})`)}`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <Mail className="size-3.5" />
+                Contact Host
+              </a>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Footer note */}
       <div className="mt-8 rounded-lg border border-border bg-muted/30 p-4 text-center text-sm text-muted-foreground">

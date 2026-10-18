@@ -24,6 +24,8 @@ export async function GET(req: NextRequest) {
             OR: [
               { title: { contains: query.search, mode: "insensitive" } },
               { description: { contains: query.search, mode: "insensitive" } },
+              { venue: { contains: query.search, mode: "insensitive" } },
+              { city: { contains: query.search, mode: "insensitive" } },
             ],
           }
         : {}),

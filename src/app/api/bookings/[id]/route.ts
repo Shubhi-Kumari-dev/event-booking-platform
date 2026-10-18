@@ -36,6 +36,7 @@ export async function GET(
             city: true,
             startDate: true,
             endDate: true,
+            organizer: { select: { id: true, name: true, email: true } },
           },
         },
         ticketType: true,

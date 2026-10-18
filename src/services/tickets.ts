@@ -1,6 +1,6 @@
 import { apiFetch, ApiError } from "@/lib/api";
 
-export type VerifyResult = "VALID" | "ALREADY_USED" | "WRONG_EVENT" | "CANCELLED" | "NOT_FOUND";
+export type VerifyResult = "VALID" | "ALREADY_USED" | "WRONG_EVENT" | "CANCELLED" | "INVALID" | "NOT_FOUND";
 
 export interface VerifyTicketResponse {
   result: VerifyResult;

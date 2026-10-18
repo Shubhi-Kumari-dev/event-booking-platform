@@ -181,9 +181,20 @@ function ResultCard({
       icon: XCircle,
       color: "text-destructive",
       bg: "bg-destructive/10 border-destructive/30",
-      label: "Ticket not found",
+      label: "Invalid ticket (not found)",
     },
-  }[result.result];
+    INVALID: {
+      icon: XCircle,
+      color: "text-destructive",
+      bg: "bg-destructive/10 border-destructive/30",
+      label: "Invalid ticket — verification failed",
+    },
+  }[result.result] ?? {
+    icon: XCircle,
+    color: "text-destructive",
+    bg: "bg-destructive/10 border-destructive/30",
+    label: "Invalid ticket",
+  };
 
   const Icon = config.icon;
 

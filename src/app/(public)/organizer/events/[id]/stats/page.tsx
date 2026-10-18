@@ -6,9 +6,11 @@ import {
   MapPin,
   Ticket,
   IndianRupee,
+  Mail,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ExportCsvButton } from "@/components/features/organizer/export-csv-button";
 import { apiFetch } from "@/lib/api";
 
 type StatsResponse = {
@@ -233,9 +235,26 @@ export default async function EventStatsPage({
 
       {/* Booking Overview */}
       <div className="mt-8 rounded-xl border border-border bg-card p-6">
-        <h2 className="text-xl font-semibold">
-          Booking Overview
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold">
+            Booking Overview
+          </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            {data.attendees.length > 0 && (
+              <a
+                href={`mailto:?bcc=${data.attendees.map((a) => a.user.email).join(",")}&subject=${encodeURIComponent(`Important Update: ${event.title}`)}`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <Mail className="size-3.5" />
+                Email All Attendees
+              </a>
+            )}
+            <ExportCsvButton
+              attendees={data.attendees}
+              eventTitle={event.title}
+            />
+          </div>
+        </div>
 
         {data.attendees.length === 0 ? (
           <p className="mt-2 text-muted-foreground">
@@ -250,9 +269,18 @@ export default async function EventStatsPage({
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium">
-                      {booking.user.name}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-foreground">
+                        {booking.user.name}
+                      </p>
+                      <a
+                        href={`mailto:${booking.user.email}?subject=${encodeURIComponent(`Regarding your booking for ${event.title}`)}`}
+                        title={`Email ${booking.user.name}`}
+                        className="rounded-md border border-border p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <Mail className="size-3" />
+                      </a>
+                    </div>
 
                     <p className="text-sm text-muted-foreground">
                       {booking.user.email}

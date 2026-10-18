@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { Calendar, MapPin, Clock, Mail } from "lucide-react";
 import { getEvent } from "@/services/events";
 import { ApiError } from "@/lib/api";
 import { formatEventDate, formatEventTime, lowestPrice } from "@/lib/format";
@@ -77,8 +77,37 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             <p className="text-sm text-muted-foreground">{event.city}</p>
           </div>
 
-          <div className="mt-6 text-sm text-muted-foreground">
-            Hosted by <span className="font-medium text-foreground">{event.organizer.name}</span>
+          {/* Host & Organizer Info Card */}
+          <div className="mt-8 rounded-xl border border-border bg-card p-5">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Event Host
+            </h3>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex size-11 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
+                  {event.organizer.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-foreground">{event.organizer.name}</p>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                      Host
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Event Organizer on Eventify</p>
+                </div>
+              </div>
+
+              {event.organizer.email && (
+                <a
+                  href={`mailto:${event.organizer.email}?subject=Inquiry about ${encodeURIComponent(event.title)}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <Mail className="size-3.5" />
+                  Contact Host
+                </a>
+              )}
+            </div>
           </div>
         </div>
 

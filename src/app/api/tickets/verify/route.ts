@@ -12,6 +12,7 @@ type VerifyResult =
   | "ALREADY_USED"
   | "CANCELLED"
   | "WRONG_EVENT"
+  | "INVALID"
   | "NOT_FOUND";
 
 export async function POST(req: NextRequest) {
@@ -33,7 +34,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (!ticket) {
-      return apiError("Ticket not found", 404, "NOT_FOUND", { result: "NOT_FOUND" as VerifyResult });
+      return apiError("Ticket not found or invalid QR code", 404, "INVALID", {
+        result: "INVALID" as VerifyResult,
+      });
     }
 
     if (ticket.booking.event.organizerId !== user.id && user.role !== ROLES.ADMIN) {

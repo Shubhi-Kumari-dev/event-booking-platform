@@ -44,10 +44,11 @@ export async function GET() {
     const recentBookings = await db.booking.findMany({
       where: { eventId: { in: eventIds } },
       orderBy: { createdAt: "desc" },
-      take: 5,
+      take: 8,
       include: {
         event: { select: { title: true } },
         user: { select: { name: true, email: true } },
+        ticketType: { select: { name: true } },
       },
     });
 
@@ -61,6 +62,27 @@ export async function GET() {
         startDate: e.startDate,
         city: e.city,
       }));
+
+    const revenueByCategoryMap: Record<string, { revenue: number; ticketsSold: number }> = {};
+    for (const e of events) {
+      const cat = e.category || "Other";
+      if (!revenueByCategoryMap[cat]) {
+        revenueByCategoryMap[cat] = { revenue: 0, ticketsSold: 0 };
+      }
+      for (const t of e.ticketTypes) {
+        revenueByCategoryMap[cat].revenue += Number(t.price) * t.quantitySold;
+        revenueByCategoryMap[cat].ticketsSold += t.quantitySold;
+      }
+    }
+
+    const revenueByCategory = Object.entries(revenueByCategoryMap)
+      .map(([category, data]) => ({
+        category,
+        revenue: data.revenue,
+        ticketsSold: data.ticketsSold,
+      }))
+      .filter((item) => item.revenue > 0 || item.ticketsSold > 0)
+      .sort((a, b) => b.revenue - a.revenue);
 
     return apiSuccess({
       totalEvents,
@@ -76,11 +98,15 @@ export async function GET() {
         bookingReference: b.bookingReference,
         eventTitle: b.event.title,
         attendeeName: b.user.name,
+        attendeeEmail: b.user.email,
+        ticketTypeName: b.ticketType.name,
+        quantity: b.quantity,
         totalAmount: b.totalAmount,
         status: b.status,
         createdAt: b.createdAt,
       })),
       upcomingEvents,
+      revenueByCategory,
     });
   } catch (error) {
     return handleApiError(error);

@@ -7,6 +7,9 @@ export interface RecentBooking {
   bookingReference: string;
   eventTitle: string;
   attendeeName: string;
+  attendeeEmail?: string;
+  ticketTypeName?: string;
+  quantity?: number;
   totalAmount: string;
   status: string;
   createdAt: string;
@@ -30,6 +33,11 @@ export interface OrganizerSummary {
   totalTicketsIssued: number;
   recentBookings: RecentBooking[];
   upcomingEvents: UpcomingEvent[];
+  revenueByCategory?: {
+    category: string;
+    revenue: number;
+    ticketsSold: number;
+  }[];
 }
 
 export async function getOrganizerSummary(cookie?: string) {
